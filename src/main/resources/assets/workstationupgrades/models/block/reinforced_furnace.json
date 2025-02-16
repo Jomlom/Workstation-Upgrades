@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "workstationupgrades:block/reinforced_furnace_top",
+    "down": "workstationupgrades:block/reinforced_furnace_bottom",
+    "north": "workstationupgrades:block/reinforced_furnace_front",
+    "south": "workstationupgrades:block/reinforced_furnace_side_vent",
+    "east": "workstationupgrades:block/reinforced_furnace_side",
+    "west": "workstationupgrades:block/reinforced_furnace_side",
+    "particle": "workstationupgrades:block/reinforced_furnace_side"
+  }
+}
