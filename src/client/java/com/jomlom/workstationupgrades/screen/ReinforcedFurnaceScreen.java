@@ -2,8 +2,10 @@ package com.jomlom.workstationupgrades.screen;
 
 import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.screenhandler.ReinforcedFurnaceScreenHandler;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.text.Text;
@@ -30,16 +32,14 @@ public class ReinforcedFurnaceScreen extends HandledScreen<ReinforcedFurnaceScre
     protected void init(){
         super.init();
 
-        // e.g. re-centre title in case window resized
+        // re-centre title in case window resized
         this.titleX = (this.backgroundWidth - this.textRenderer.getWidth(this.title)) / 2;
-
-        // widgets e.g. buttons or scrollbars
-        // use addDrawableChild( widget )
 
     }
 
     @Override
     protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
+
         context.drawTexture(
                 RenderLayer::getGuiTextured,
                 TEXTURE,

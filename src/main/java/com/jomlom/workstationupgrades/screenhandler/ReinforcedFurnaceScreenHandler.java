@@ -3,19 +3,20 @@ package com.jomlom.workstationupgrades.screenhandler;
 import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.blockentity.ReinforcedFurnaceEntity;
 import com.jomlom.workstationupgrades.init.ScreenHandlerTypeInit;
-import com.jomlom.workstationupgrades.inventory.ReinforcedFurnaceInventory;
 import com.jomlom.workstationupgrades.network.BlockPosPayload;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.util.collection.DefaultedList;
 
 public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
 
+    private final Inventory inventory;
     private final ReinforcedFurnaceEntity blockEntity;
-
     private final ScreenHandlerContext context;
 
     // client constructor
@@ -29,79 +30,122 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
         super(ScreenHandlerTypeInit.REINFORCED_FURNACE, syncId);
 
         this.blockEntity = blockEntity;
+        this.inventory = (Inventory) blockEntity;
         this.context = ScreenHandlerContext.create(this.blockEntity.getWorld(), this.blockEntity.getPos());
 
-        ReinforcedFurnaceInventory inventory = this.blockEntity.getInventory();
-        checkSize(inventory, 4);
+        DefaultedList<ItemStack> inventory = this.blockEntity.getInventory();
 
-        inventory.onOpen(playerInventory.player);
+        inventory.forEach(itemStack -> itemStack.setCount(0)); // Clear any previous stacks
 
         addBlockEntityInventory(inventory);
         addPlayerInventory(playerInventory);
         addPlayerHotbar(playerInventory);
-
     }
 
     private void addPlayerHotbar(PlayerInventory playerInventory){
         for (int column = 0; column < 9; column++){
-            addSlot(new Slot(playerInventory, column, 8 + (column*18), 160));
+            addSlot(new Slot(playerInventory, column, 8 + (column * 18), 160));
         }
     }
 
     private void addPlayerInventory(PlayerInventory playerInventory){
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(playerInventory, 9 + (row*9) + column, 8 + (column*18), 102 + (row*18)));
+                addSlot(new Slot(playerInventory, 9 + (row * 9) + column, 8 + (column * 18), 102 + (row * 18)));
             }
         }
     }
 
-    private void addBlockEntityInventory(ReinforcedFurnaceInventory inventory){
-        // add input slot index 0
-        addSlot(new Slot(inventory, 0, 52, 20) {
+    private void addBlockEntityInventory(DefaultedList<ItemStack> inventory){
+        // Add input slot index 0
+        addSlot(new Slot(this.inventory, 0, 52, 20) {
             @Override
             public boolean canInsert(ItemStack stack) {
-                return inventory.isValid(0, stack);
+                return blockEntity.isValid(0, stack);
             }
             @Override
             public void setStack(ItemStack stack) {
                 super.setStack(stack);
                 blockEntity.markDirty();
+                sendContentUpdates();
+            }
+            @Override
+            public ItemStack takeStack(int amount) {
+                ItemStack stack = super.takeStack(amount);
+                if (stack.isEmpty()) {
+                    setStack(ItemStack.EMPTY);
+                }
+                blockEntity.markDirty();
+                sendContentUpdates();
+                return stack;
             }
         });
-        // add fuel slots indexes 1 & 2
-        addSlot(new Slot(inventory, 1, 43, 57){
+        // Add fuel slots indexes 1 & 2
+        addSlot(new Slot(this.inventory, 1, 43, 57) {
             @Override
             public boolean canInsert(ItemStack stack) {
-                return inventory.isValid(1, stack);
+                return blockEntity.isValid(1, stack);
             }
             @Override
             public void setStack(ItemStack stack) {
                 super.setStack(stack);
                 blockEntity.markDirty();
+                sendContentUpdates();
+            }
+            @Override
+            public ItemStack takeStack(int amount) {
+                ItemStack stack = super.takeStack(amount);
+                if (stack.isEmpty()) {
+                    setStack(ItemStack.EMPTY);
+                }
+                blockEntity.markDirty();
+                sendContentUpdates();
+                return stack;
             }
         });
-        addSlot(new Slot(inventory, 2, 61, 57){
+        addSlot(new Slot(this.inventory, 2, 61, 57) {
             @Override
             public boolean canInsert(ItemStack stack) {
-                return inventory.isValid(2, stack);
+                return blockEntity.isValid(2, stack);
             }
             @Override
             public void setStack(ItemStack stack) {
                 super.setStack(stack);
                 blockEntity.markDirty();
+                sendContentUpdates();
+            }
+            @Override
+            public ItemStack takeStack(int amount) {
+                ItemStack stack = super.takeStack(amount);
+                if (stack.isEmpty()) {
+                    setStack(ItemStack.EMPTY);
+                }
+                blockEntity.markDirty();
+                sendContentUpdates();
+                return stack;
             }
         });
-        // add output slot index 3
-        addSlot(new Slot(inventory, 3, 112, 39){
+        // Add output slot index 3
+        addSlot(new Slot(this.inventory, 3, 112, 39) {
             @Override
             public boolean canInsert(ItemStack stack) {
-                return inventory.isValid(3, stack);
+                return blockEntity.isValid(3, stack);
             }
             @Override
             public void setStack(ItemStack stack) {
                 super.setStack(stack);
                 blockEntity.markDirty();
+                sendContentUpdates();
+            }
+            @Override
+            public ItemStack takeStack(int amount) {
+                ItemStack stack = super.takeStack(amount);
+                if (stack.isEmpty()) {
+                    setStack(ItemStack.EMPTY);
+                }
+                blockEntity.markDirty();
+                sendContentUpdates();
+                return stack;
             }
         });
     }
@@ -109,34 +153,33 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
     @Override
     public void onClosed(PlayerEntity player) {
         super.onClosed(player);
-        this.blockEntity.getInventory().onClose(player);
+        this.blockEntity.getInventory().forEach(itemStack -> itemStack.setCount(0)); // Clean up the inventory
     }
 
-    // shift clicking item from inventory
     @Override
     public ItemStack quickMove(PlayerEntity player, int slotIndex) {
         int blockEntityInvSize = this.blockEntity.getInventory().size();
         ItemStack newStack = ItemStack.EMPTY;
         Slot slot = getSlot(slotIndex);
 
-        if (slot != null && slot.hasStack()){
+        if (slot != null && slot.hasStack()) {
             ItemStack inSlot = slot.getStack();
             newStack = inSlot.copy();
 
-            if (slotIndex < blockEntityInvSize){
+            if (slotIndex < blockEntityInvSize) {
                 if (!insertItem(inSlot, blockEntityInvSize, this.slots.size(), false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!insertItem(inSlot, 0, blockEntityInvSize-1, false)) {
+            } else if (!insertItem(inSlot, 0, blockEntityInvSize - 1, false)) {
                 return ItemStack.EMPTY;
             }
 
-            if (inSlot.isEmpty()){
+            if (inSlot.isEmpty()) {
                 slot.setStack(ItemStack.EMPTY);
             }
-
         }
         blockEntity.markDirty();
+        sendContentUpdates();
         return newStack;
     }
 
@@ -145,8 +188,7 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
         return canUse(this.context, player, WorkstationUpgrades.ModBlocks.REINFORCED_FURNACE);
     }
 
-    public ReinforcedFurnaceEntity getBlockEntity(){
+    public ReinforcedFurnaceEntity getBlockEntity() {
         return this.blockEntity;
     }
-
 }

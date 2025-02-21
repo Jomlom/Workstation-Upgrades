@@ -2,11 +2,9 @@ package com.jomlom.workstationupgrades.blockentity;
 
 import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.block.ReinforcedFurnace;
-import com.jomlom.workstationupgrades.inventory.ReinforcedFurnaceInventory;
 import com.jomlom.workstationupgrades.network.BlockPosPayload;
 import com.jomlom.workstationupgrades.screenhandler.ReinforcedFurnaceScreenHandler;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -28,29 +26,27 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScreenHandlerFactory<BlockPosPayload> {
+public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScreenHandlerFactory<BlockPosPayload>, ImplementedInventory {
 
     public static final Text TITLE = Text.translatable("container." + WorkstationUpgrades.MOD_ID + ".reinforced_furnace");
 
-    private int totalSmeltingTime = 20*3;;
+    private int totalSmeltingTime = 20 * 3;
     private int smeltingTime = totalSmeltingTime;  // The current time for smelting.
     private int currentFuelTime = 0;  // Time left for the current fuel.
     private int totalFuelTime;  // Total time for the two fuel items.
     private boolean isSmelting;  // Whether the furnace is currently smelting.
 
-    private final ReinforcedFurnaceInventory inventory = new ReinforcedFurnaceInventory(this);
 
-    private final InventoryStorage inventoryStorage = InventoryStorage.of(inventory, null);
+    private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(4, ItemStack.EMPTY); // 4 slots (input, 2 fuel slots, output)
 
-    public ReinforcedFurnaceEntity (BlockPos pos, BlockState state){
-
+    public ReinforcedFurnaceEntity(BlockPos pos, BlockState state) {
         super(WorkstationUpgrades.ModBlocks.REINFORCED_FURNACE_ENTITY, pos, state);
-
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, ReinforcedFurnaceEntity entity) {
@@ -74,23 +70,25 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
 
             if (entity.currentFuelTime > 0) {
                 entity.currentFuelTime--;
+                entity.markDirty();
             }
 
-            ItemStack input = entity.getInventory().getStack(0);  // get the input stack
+            ItemStack input = entity.getInventory().get(0);  // get the input stack
 
             // check if the furnace is smelting
             if (entity.isSmelting) {
                 entity.tickSmelting(input);
+                entity.markDirty();
             } else {
                 if (entity.readyToSmelt(input)) {
                     if (!(entity.currentFuelTime > 0)) {
                         entity.consumeFuel();
+
                     }
                     entity.startSmelting();
+                    entity.markDirty();
                 }
             }
-
-            entity.sync();
         }
     }
 
@@ -169,53 +167,44 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
         }
     }
 
-
     private boolean readyToSmelt(ItemStack input) {
         return (currentFuelTime > 0 || hasFuel()) && canSmelt(input);
     }
 
     private void tickSmelting(ItemStack input) {
-        if (this.canSmelt(input) && smeltingTime > 0){
-            if (this.currentFuelTime > 0){
+        if (this.canSmelt(input) && smeltingTime > 0) {
+            if (this.currentFuelTime > 0) {
                 smeltingTime--;
-            }
-            else if (this.hasFuel()){
+            } else if (this.hasFuel()) {
                 this.consumeFuel();
                 smeltingTime--;
-            }
-            else if (smeltingTime < totalSmeltingTime) {
+            } else if (smeltingTime < totalSmeltingTime) {
                 smeltingTime++;
-            }
-            else {
+            } else {
                 resetSmelting();
             }
-        }
-        else if (this.canSmelt(input) && smeltingTime == 0){
+        } else if (this.canSmelt(input) && smeltingTime == 0) {
             completeSmelting();
             if (this.readyToSmelt(input)) {
-                if (currentFuelTime == 0){
+                if (currentFuelTime == 0) {
                     this.consumeFuel();
                 }
                 this.startSmelting();
-            }
-            else {
+            } else {
                 this.resetSmelting();
             }
-        }
-        else {
+        } else {
             resetSmelting();
         }
     }
 
-    // check if fuel is available
     private boolean hasFuel() {
-        ItemStack fuelSlot1 = this.inventory.getStack(1);  // fuel slot 1
-        ItemStack fuelSlot2 = this.inventory.getStack(2);  // fuel slot 2
+        ItemStack fuelSlot1 = this.inventory.get(1);  // Fuel slot 1
+        ItemStack fuelSlot2 = this.inventory.get(2);  // Fuel slot 2
         return !fuelSlot1.isEmpty() && !fuelSlot2.isEmpty() &&
                 canUseFuel(fuelSlot1) && canUseFuel(fuelSlot2);
     }
 
-    // Check if the item can be used as fuel
     private boolean canUseFuel(ItemStack stack) {
         return world.getFuelRegistry().getFuelTicks(stack) > 0;
     }
@@ -225,10 +214,9 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
         this.smeltingTime = this.totalSmeltingTime;
     }
 
-    // consume fuel from the slots
     private void consumeFuel() {
-        ItemStack fuel1 = this.inventory.getStack(1);
-        ItemStack fuel2 = this.inventory.getStack(2);
+        ItemStack fuel1 = this.inventory.get(1);
+        ItemStack fuel2 = this.inventory.get(2);
 
         this.totalFuelTime = (world.getFuelRegistry().getFuelTicks(fuel1) + world.getFuelRegistry().getFuelTicks(fuel2)) / 2;
         this.currentFuelTime = this.totalFuelTime;
@@ -238,90 +226,71 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
         ItemStack newFuel2 = fuel2.copy();
         newFuel2.decrement(1);
 
-        this.inventory.setStack(1, newFuel1);
-        if (this.inventory.getStack(1).isEmpty()){
-            this.inventory.setStack(1, ItemStack.EMPTY);
+        this.inventory.set(1, newFuel1);
+        if (this.inventory.get(1).isEmpty()) {
+            this.inventory.set(1, ItemStack.EMPTY);
         }
-        this.inventory.setStack(2, newFuel2);
-        if (this.inventory.getStack(2).isEmpty()){
-            this.inventory.setStack(2, ItemStack.EMPTY);
+        this.inventory.set(2, newFuel2);
+        if (this.inventory.get(2).isEmpty()) {
+            this.inventory.set(2, ItemStack.EMPTY);
         }
     }
 
-    // reset smelting if interrupted
     private void resetSmelting() {
         this.isSmelting = false;
         this.smeltingTime = this.totalSmeltingTime;
     }
 
-    // complete smelting, handle output and fuel consumption
     private void completeSmelting() {
-
-        ItemStack input = this.inventory.getStack(0);  // The input slot
-        ItemStack output = this.inventory.getStack(3); // The output slot
+        ItemStack input = this.inventory.get(0);  // The input slot
+        ItemStack output = this.inventory.get(3); // The output slot
 
         if (!input.isEmpty() && canSmelt(input)) {
-            ItemStack result = getSmeltingResult(input);  // Determine the result based on the input
+            ItemStack result = getSmeltingResult(input);
 
-            // If the output is empty or matches the result, proceed
             if (output.isEmpty() || ((output.getItem() == result.getItem()) && output.getCount() < output.getMaxCount())) {
 
                 if (output.isEmpty()) {
-                    this.inventory.setStack(3, result.copy());
+                    this.inventory.set(3, result.copy());
                 } else {
-                    output.increment(1);  // Increment count for the smelted item
+                    output.increment(1);
                 }
 
                 ItemStack newInput = input.copy();
                 newInput.decrement(1);
-                this.inventory.setStack(0, newInput);
-                if (this.inventory.getStack(0).isEmpty()){
-                    this.inventory.setStack(0, ItemStack.EMPTY);
+                this.inventory.set(0, newInput);
+                if (this.inventory.get(0).isEmpty()) {
+                    this.inventory.set(0, ItemStack.EMPTY);
                 }
 
                 smeltingTime = totalSmeltingTime;
-
             }
         }
     }
 
-    // check if the item can be smelted
     private boolean canSmelt(ItemStack input) {
-
         if (input.isEmpty()) {
-            return false; // No input to smelt
+            return false;
         }
 
-        // get the smelting result
         ItemStack result = getSmeltingResult(input);
-
-        // check if the result is valid (not empty)
         if (result.isEmpty()) {
-            return false; // no valid recipe found
+            return false;
         }
 
-        // check the output slot (either empty or matches the result)
-        ItemStack output = this.inventory.getStack(3); // The output slot
-
+        ItemStack output = this.inventory.get(3);
         if (output.isEmpty()) {
-            return true; // output slot is empty so we can smelt and place the result
+            return true;
         }
 
-        // check if the output matches the expected result and there is space for more
         return (output.getItem() == result.getItem()) && (output.getCount() < output.getMaxCount());
     }
 
-
     public ItemStack getSmeltingResult(ItemStack inputStack) {
-        // Ensure we are on the server side, as the following code requires a ServerWorld
         if (world instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) world;
-
-            // Now you can safely use the ServerWorld
             SingleStackRecipeInput recipeInput = new SingleStackRecipeInput(inputStack);
-
-            // Use the recipe match getter to find a matching recipe
-            RecipeType<? extends AbstractCookingRecipe> recipeType = RecipeType.SMELTING; // Adjust as needed
+            RecipeType<? extends AbstractCookingRecipe> recipeType = RecipeType.SMELTING;
             RecipeEntry<? extends AbstractCookingRecipe> recipeEntry = serverWorld.getRecipeManager()
                     .getFirstMatch(recipeType, recipeInput, serverWorld)
                     .orElse(null);
@@ -331,35 +300,37 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
                 return recipe.craft(recipeInput, serverWorld.getRegistryManager());
             }
         }
-        // If we're on the client side, or no recipe is found, return an empty stack
         return ItemStack.EMPTY;
     }
 
-    // read & write methods for persistent storage
     @Override
-    protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup){
-
-        Inventories.writeNbt(nbt, this.inventory.getHeldStacks(), registryLookup);
-        nbt.putInt("SmeltingTime", this.smeltingTime); // Save current smelting time
-        nbt.putInt("TotalSmeltingTime", this.totalSmeltingTime); // Save total smelting time
-        nbt.putInt("CurrentFuelTime", this.currentFuelTime); // Save current fuel time
-        nbt.putInt("TotalFuelTime", this.totalFuelTime); // Save total fuel time
-        nbt.putBoolean("IsSmelting", this.isSmelting); // Save smelting state
+    protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
 
         super.writeNbt(nbt, registryLookup);
+
+
+        Inventories.writeNbt(nbt, inventory, registryLookup);
+
+        nbt.putInt("SmeltingTime", this.smeltingTime);
+        nbt.putInt("TotalSmeltingTime", this.totalSmeltingTime);
+        nbt.putInt("CurrentFuelTime", this.currentFuelTime);
+        nbt.putInt("TotalFuelTime", this.totalFuelTime);
+        nbt.putBoolean("IsSmelting", this.isSmelting);
+
     }
 
     @Override
-    protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup){
+    protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
 
         super.readNbt(nbt, registryLookup);
 
-        this.smeltingTime = nbt.getInt("SmeltingTime"); // Restore current smelting time
-        this.totalSmeltingTime = nbt.getInt("TotalSmeltingTime"); // Restore total smelting time
-        this.currentFuelTime = nbt.getInt("CurrentFuelTime"); // Restore current fuel time
-        this.totalFuelTime = nbt.getInt("TotalFuelTime"); // Restore total fuel time
-        this.isSmelting = nbt.getBoolean("IsSmelting"); // Restore smelting state
-        Inventories.readNbt(nbt, this.inventory.getHeldStacks(), registryLookup);
+        this.smeltingTime = nbt.getInt("SmeltingTime");
+        this.totalSmeltingTime = nbt.getInt("TotalSmeltingTime");
+        this.currentFuelTime = nbt.getInt("CurrentFuelTime");
+        this.totalFuelTime = nbt.getInt("TotalFuelTime");
+        this.isSmelting = nbt.getBoolean("IsSmelting");
+
+        Inventories.readNbt(nbt, inventory, registryLookup);
 
     }
 
@@ -392,27 +363,46 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
     }
 
     @Override
+    public DefaultedList<ItemStack> getItems() {
+        return inventory;
+    }
+
+    @Override
     public void markDirty() {
         super.markDirty();
-        if (!world.isClient){
+        if (!world.isClient) {
             sync();
         }
     }
 
-    private void sync(){
-        if (world instanceof ServerWorld serverWorld){
+    public boolean isValid(int slot, ItemStack stack) {
+        if (slot == 0) {
+            return true;
+        } else if (slot == 1 || slot == 2) {
+            boolean isFuelValid = isFuel(stack);
+            return isFuelValid;
+        } else if (slot == 3) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isFuel(ItemStack stack) {
+        if (this.getWorld() == null || this.getWorld().isClient) {
+            return false;
+        }
+        return this.getWorld().getFuelRegistry().isFuel(stack);
+    }
+
+    private void sync() {
+        if (world instanceof ServerWorld serverWorld) {
             serverWorld.getChunkManager().markForUpdate(pos);
             serverWorld.getPlayers(player -> player.squaredDistanceTo(pos.getX(), pos.getY(), pos.getZ()) < 64)
                     .forEach(player -> player.networkHandler.sendPacket(toUpdatePacket()));
         }
     }
 
-
-    public InventoryStorage getInventoryProvider(Direction direction){
-        return this.inventoryStorage;
-    }
-
-    public ReinforcedFurnaceInventory getInventory(){
+    public DefaultedList<ItemStack> getInventory() {
         return this.inventory;
     }
 

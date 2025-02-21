@@ -38,7 +38,6 @@ public class WorkstationUpgrades implements ModInitializer {
 		ModBlocks.initialize();
 		ScreenHandlerTypeInit.initialize();
 
-		ItemStorage.SIDED.registerForBlockEntity(ReinforcedFurnaceEntity::getInventoryProvider, ModBlocks.REINFORCED_FURNACE_ENTITY);
 	}
 
 	public static class ModBlocks {
