@@ -4,6 +4,8 @@ import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.blockentity.ReinforcedFurnaceEntity;
 import com.jomlom.workstationupgrades.init.ScreenHandlerTypeInit;
 import com.jomlom.workstationupgrades.network.BlockPosPayload;
+import net.minecraft.block.Block;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -11,11 +13,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.collection.DefaultedList;
 
 public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
 
-    private final Inventory inventory;
+    final Inventory inventory;
     private final ReinforcedFurnaceEntity blockEntity;
     private final ScreenHandlerContext context;
 
@@ -30,12 +33,10 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
         super(ScreenHandlerTypeInit.REINFORCED_FURNACE, syncId);
 
         this.blockEntity = blockEntity;
-        this.inventory = (Inventory) blockEntity;
+        this.inventory = blockEntity;
         this.context = ScreenHandlerContext.create(this.blockEntity.getWorld(), this.blockEntity.getPos());
 
         DefaultedList<ItemStack> inventory = this.blockEntity.getInventory();
-
-        inventory.forEach(itemStack -> itemStack.setCount(0)); // Clear any previous stacks
 
         addBlockEntityInventory(inventory);
         addPlayerInventory(playerInventory);
@@ -63,22 +64,6 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
             public boolean canInsert(ItemStack stack) {
                 return blockEntity.isValid(0, stack);
             }
-            @Override
-            public void setStack(ItemStack stack) {
-                super.setStack(stack);
-                blockEntity.markDirty();
-                sendContentUpdates();
-            }
-            @Override
-            public ItemStack takeStack(int amount) {
-                ItemStack stack = super.takeStack(amount);
-                if (stack.isEmpty()) {
-                    setStack(ItemStack.EMPTY);
-                }
-                blockEntity.markDirty();
-                sendContentUpdates();
-                return stack;
-            }
         });
         // Add fuel slots indexes 1 & 2
         addSlot(new Slot(this.inventory, 1, 43, 57) {
@@ -86,43 +71,11 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
             public boolean canInsert(ItemStack stack) {
                 return blockEntity.isValid(1, stack);
             }
-            @Override
-            public void setStack(ItemStack stack) {
-                super.setStack(stack);
-                blockEntity.markDirty();
-                sendContentUpdates();
-            }
-            @Override
-            public ItemStack takeStack(int amount) {
-                ItemStack stack = super.takeStack(amount);
-                if (stack.isEmpty()) {
-                    setStack(ItemStack.EMPTY);
-                }
-                blockEntity.markDirty();
-                sendContentUpdates();
-                return stack;
-            }
         });
         addSlot(new Slot(this.inventory, 2, 61, 57) {
             @Override
             public boolean canInsert(ItemStack stack) {
                 return blockEntity.isValid(2, stack);
-            }
-            @Override
-            public void setStack(ItemStack stack) {
-                super.setStack(stack);
-                blockEntity.markDirty();
-                sendContentUpdates();
-            }
-            @Override
-            public ItemStack takeStack(int amount) {
-                ItemStack stack = super.takeStack(amount);
-                if (stack.isEmpty()) {
-                    setStack(ItemStack.EMPTY);
-                }
-                blockEntity.markDirty();
-                sendContentUpdates();
-                return stack;
             }
         });
         // Add output slot index 3
@@ -131,29 +84,12 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
             public boolean canInsert(ItemStack stack) {
                 return blockEntity.isValid(3, stack);
             }
-            @Override
-            public void setStack(ItemStack stack) {
-                super.setStack(stack);
-                blockEntity.markDirty();
-                sendContentUpdates();
-            }
-            @Override
-            public ItemStack takeStack(int amount) {
-                ItemStack stack = super.takeStack(amount);
-                if (stack.isEmpty()) {
-                    setStack(ItemStack.EMPTY);
-                }
-                blockEntity.markDirty();
-                sendContentUpdates();
-                return stack;
-            }
         });
     }
 
     @Override
     public void onClosed(PlayerEntity player) {
         super.onClosed(player);
-        this.blockEntity.getInventory().forEach(itemStack -> itemStack.setCount(0)); // Clean up the inventory
     }
 
     @Override
@@ -178,8 +114,10 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
                 slot.setStack(ItemStack.EMPTY);
             }
         }
+
         blockEntity.markDirty();
         sendContentUpdates();
+
         return newStack;
     }
 

@@ -7,7 +7,6 @@ import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
@@ -56,7 +55,11 @@ public class WorkstationUpgrades implements ModInitializer {
 		);
 
 		public static final Block REINFORCED_FURNACE = register(
-				new ReinforcedFurnace(AbstractBlock.Settings.create().registryKey(REINFORCED_FURNACE_KEY).sounds(BlockSoundGroup.ANVIL)),
+				new ReinforcedFurnace(AbstractBlock.Settings.create().registryKey(REINFORCED_FURNACE_KEY)
+						.sounds(BlockSoundGroup.ANVIL)
+						.requiresTool()
+						.strength(10f, 10f)
+				),
 				REINFORCED_FURNACE_KEY,
 				true
 		);
@@ -81,7 +84,5 @@ public class WorkstationUpgrades implements ModInitializer {
 			Identifier id = Identifier.of(MOD_ID, name);
 			return Registry.register(Registries.BLOCK_ENTITY_TYPE, id, FabricBlockEntityTypeBuilder.<T>create(entityFactory, blocks).build());
 		}
-
 	}
-
 }

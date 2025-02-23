@@ -395,10 +395,8 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
     }
 
     private void sync() {
-        if (world instanceof ServerWorld serverWorld) {
-            serverWorld.getChunkManager().markForUpdate(pos);
-            serverWorld.getPlayers(player -> player.squaredDistanceTo(pos.getX(), pos.getY(), pos.getZ()) < 64)
-                    .forEach(player -> player.networkHandler.sendPacket(toUpdatePacket()));
+        if (this.world instanceof ServerWorld serverWorld) {
+            serverWorld.getChunkManager().markForUpdate(this.pos);
         }
     }
 
