@@ -2,10 +2,8 @@ package com.jomlom.workstationupgrades.screen;
 
 import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.screenhandler.ReinforcedFurnaceScreenHandler;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.text.Text;
@@ -30,6 +28,7 @@ public class ReinforcedFurnaceScreen extends HandledScreen<ReinforcedFurnaceScre
     // called when screen is created or redrawn
     @Override
     protected void init(){
+
         super.init();
 
         // re-centre title in case window resized

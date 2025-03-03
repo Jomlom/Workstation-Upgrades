@@ -2,6 +2,7 @@ package com.jomlom.workstationupgrades.init;
 
 import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.network.BlockPosPayload;
+import com.jomlom.workstationupgrades.screenhandler.AdvancedCraftingScreenHandler;
 import com.jomlom.workstationupgrades.screenhandler.ReinforcedFurnaceScreenHandler;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.network.RegistryByteBuf;
@@ -18,6 +19,9 @@ public class ScreenHandlerTypeInit {
     public static final ScreenHandlerType<ReinforcedFurnaceScreenHandler> REINFORCED_FURNACE =
             register("reinforced_furnace", ReinforcedFurnaceScreenHandler::new, BlockPosPayload.PACKET_CODEC);
 
+    public static final ScreenHandlerType<AdvancedCraftingScreenHandler> ADVANCED_CRAFTING_TABLE =
+            register("advanced_crafting_table", AdvancedCraftingScreenHandler::new, BlockPosPayload.PACKET_CODEC);
+
     public static <T extends ScreenHandler, D extends CustomPayload> ExtendedScreenHandlerType<T, D>
     register(
             String name,
@@ -29,6 +33,5 @@ public class ScreenHandlerTypeInit {
 
     public static void initialize(){
     }
-
 
 }

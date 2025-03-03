@@ -1,5 +1,8 @@
 {
   "block.workstationupgrades.reinforced_furnace": "Reinforced Furnace",
   "item.workstationupgrades.reinforced_furnace": "Reinforced Furnace",
-  "container.workstationupgrades.reinforced_furnace": "Reinforced Furnace"
+  "container.workstationupgrades.reinforced_furnace": "Reinforced Furnace",
+  "block.workstationupgrades.advanced_crafting_table": "Advanced Crafting Table",
+  "item.workstationupgrades.advanced_crafting_table": "Advanced Crafting Table",
+  "container.workstationupgrades.advanced_crafting": "Advanced Crafting"
 }

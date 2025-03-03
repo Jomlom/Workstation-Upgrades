@@ -4,8 +4,6 @@ import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.blockentity.ReinforcedFurnaceEntity;
 import com.jomlom.workstationupgrades.init.ScreenHandlerTypeInit;
 import com.jomlom.workstationupgrades.network.BlockPosPayload;
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -13,7 +11,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.collection.DefaultedList;
 
 public class ReinforcedFurnaceScreenHandler extends ScreenHandler {

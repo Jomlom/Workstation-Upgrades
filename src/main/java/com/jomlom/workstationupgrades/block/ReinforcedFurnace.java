@@ -33,7 +33,6 @@ public class ReinforcedFurnace extends BlockWithEntity {
     public ReinforcedFurnace(Settings settings){
         super(settings.luminance(state -> state.get(LIT) ? 15 : 0));
         setDefaultState(getStateManager().getDefaultState().with(FACING, Direction.NORTH).with(LIT, false));
-
     }
 
     @Override
@@ -47,7 +46,6 @@ public class ReinforcedFurnace extends BlockWithEntity {
                 .with(FACING, ctx.getHorizontalPlayerFacing().getOpposite()) // Fix method name
                 .with(LIT, false);
     }
-
 
     @Override
     protected MapCodec<? extends BlockWithEntity> getCodec(){
@@ -77,7 +75,6 @@ public class ReinforcedFurnace extends BlockWithEntity {
                 if (player.isSneaking()){
                     return ActionResult.PASS;
                 }
-                // functionality here
                 player.openHandledScreen(reinforcedFurnaceEntity);
             }
         }

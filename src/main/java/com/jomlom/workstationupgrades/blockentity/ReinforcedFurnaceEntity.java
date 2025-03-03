@@ -42,7 +42,6 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
     private int totalFuelTime;  // Total time for the two fuel items.
     private boolean isSmelting;  // Whether the furnace is currently smelting.
 
-
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(4, ItemStack.EMPTY); // 4 slots (input, 2 fuel slots, output)
 
     public ReinforcedFurnaceEntity(BlockPos pos, BlockState state) {
@@ -308,9 +307,7 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
 
         super.writeNbt(nbt, registryLookup);
 
-
         Inventories.writeNbt(nbt, inventory, registryLookup);
-
         nbt.putInt("SmeltingTime", this.smeltingTime);
         nbt.putInt("TotalSmeltingTime", this.totalSmeltingTime);
         nbt.putInt("CurrentFuelTime", this.currentFuelTime);
@@ -329,7 +326,6 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
         this.currentFuelTime = nbt.getInt("CurrentFuelTime");
         this.totalFuelTime = nbt.getInt("TotalFuelTime");
         this.isSmelting = nbt.getBoolean("IsSmelting");
-
         Inventories.readNbt(nbt, inventory, registryLookup);
 
     }
@@ -397,6 +393,7 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
     private void sync() {
         if (this.world instanceof ServerWorld serverWorld) {
             serverWorld.getChunkManager().markForUpdate(this.pos);
+            this.world.updateListeners(this.pos, getCachedState(), getCachedState(), 3);
         }
     }
 
