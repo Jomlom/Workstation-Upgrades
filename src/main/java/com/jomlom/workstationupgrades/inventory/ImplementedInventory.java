@@ -1,4 +1,4 @@
-package com.jomlom.workstationupgrades.blockentity;
+package com.jomlom.workstationupgrades.inventory;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;

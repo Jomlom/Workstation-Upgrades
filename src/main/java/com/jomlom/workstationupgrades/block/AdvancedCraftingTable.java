@@ -2,7 +2,6 @@ package com.jomlom.workstationupgrades.block;
 
 import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.blockentity.AdvancedCraftingTableEntity;
-import com.jomlom.workstationupgrades.blockentity.ReinforcedFurnaceEntity;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.BlockRenderType;
@@ -10,10 +9,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.stat.Stats;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -44,7 +41,7 @@ public class AdvancedCraftingTable extends BlockWithEntity {
                 return super.onUse(state, world, pos, player, hit);
             }
             else {
-                // if player is sneaking pass so other action can happen e.g. eating or placing block
+                // If player is sneaking pass so other action can happen
                 if (player.isSneaking()){
                     return ActionResult.PASS;
                 }
@@ -60,14 +57,11 @@ public class AdvancedCraftingTable extends BlockWithEntity {
     }
 
     @Override
-    protected void onStateReplaced(BlockState state, World world, BlockPos pos,
-                                   BlockState newState, boolean moved) {
+    protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity != null) {
-                // Optionally, drop items from your AdvancedCraftingTableEntity's inventory.
-                // For a crafting table, vanilla doesn't drop anything, but you might:
-                // ItemScatterer.spawn(world, pos, ((AdvancedCraftingTableEntity) blockEntity).getInventory());
+                ItemScatterer.spawn(world, pos, ((AdvancedCraftingTableEntity) blockEntity));
                 world.updateComparators(pos, this);
             }
             super.onStateReplaced(state, world, pos, newState, moved);

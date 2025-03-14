@@ -4,7 +4,8 @@ import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.blockentity.AdvancedCraftingTableEntity;
 import com.jomlom.workstationupgrades.init.ScreenHandlerTypeInit;
 import com.jomlom.workstationupgrades.network.BlockPosPayload;
-import net.minecraft.component.ComponentType;
+import com.mojang.datafixers.kinds.IdF;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.CraftingResultInventory;
@@ -12,9 +13,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.RecipeInputInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
-import net.minecraft.recipe.CraftingRecipe;
-import net.minecraft.recipe.RecipeEntry;
-import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.*;
 import net.minecraft.recipe.book.RecipeBookType;
 import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.screen.AbstractCraftingScreenHandler;
@@ -22,29 +21,33 @@ import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
+import com.jomlom.recipebookaccess.api.RecipeBookInventoryProvider;
 
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler {
+public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler implements RecipeBookInventoryProvider {
 
     private final ScreenHandlerContext context;
     private final AdvancedCraftingTableEntity blockEntity;
-    final Inventory inventory;
     private boolean filling;
-    private PlayerEntity player;
+    private final PlayerEntity player;
     private boolean finishedCreating = false;
 
+    // Client constructor
     public AdvancedCraftingScreenHandler(int syncId, PlayerInventory playerInventory, BlockPosPayload payload) {
         this(syncId, playerInventory, (AdvancedCraftingTableEntity) playerInventory.player.getWorld().getBlockEntity(payload.pos()));
     }
 
+    // Main constructor
     public AdvancedCraftingScreenHandler(int syncId, PlayerInventory playerInventory, AdvancedCraftingTableEntity blockEntity) {
         super(ScreenHandlerTypeInit.ADVANCED_CRAFTING_TABLE, syncId, 3, 3);
-
         this.blockEntity = blockEntity;
-        this.inventory = blockEntity;
         this.context = ScreenHandlerContext.create(this.blockEntity.getWorld(), this.blockEntity.getPos());
         this.player = playerInventory.player;
 
@@ -53,12 +56,11 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
         for (int i = 0; i < 9; i++) {
             this.slots.get(i+1).setStack(blockEntity.getStack(i));
         }
+        this.addPlayerSlots(playerInventory, 8, 84);
         finishedCreating = true;
         if (this.blockEntity.getWorld() instanceof ServerWorld serverWorld) {
             updateResult(this, serverWorld, getPlayer(), this.craftingInventory, this.craftingResultInventory, null);
         }
-
-        this.addPlayerSlots(playerInventory, 8, 84);
     }
 
     protected static void updateResult(AdvancedCraftingScreenHandler handler, ServerWorld world, PlayerEntity player, RecipeInputInventory craftingInventory, CraftingResultInventory resultInventory, @Nullable RecipeEntry<CraftingRecipe> recipe) {
@@ -79,7 +81,6 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
                 }
             }
         }
-
         resultInventory.setStack(0, resultStack);
         handler.setPreviousTrackedSlot(0, resultStack);
         serverPlayerEntity.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(handler.syncId, handler.nextRevision(), 0, resultStack));
@@ -113,7 +114,6 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
     @Override
     public void onClosed(PlayerEntity player) {
         super.onClosed(player);
-        // store crafting input to block entity
     }
 
     @Override
@@ -125,11 +125,9 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
     public ItemStack quickMove(PlayerEntity player, int slot) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot clickedSlot = this.slots.get(slot);
-
         if (clickedSlot != null && clickedSlot.hasStack()) {
             ItemStack itemStack2 = clickedSlot.getStack();
             itemStack = itemStack2.copy();
-
             if (slot == 0) { // Crafting result slot
                 this.context.run((world, pos) -> itemStack2.getItem().onCraftByPlayer(itemStack2, world, player));
                 if (!this.insertItem(itemStack2, 10, 46, true)) {
@@ -149,23 +147,19 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
             } else if (!this.insertItem(itemStack2, 10, 46, false)) {
                 return ItemStack.EMPTY;
             }
-
             if (itemStack2.isEmpty()) {
                 clickedSlot.setStack(ItemStack.EMPTY);
             } else {
                 clickedSlot.markDirty();
             }
-
             if (itemStack2.getCount() == itemStack.getCount()) {
                 return ItemStack.EMPTY;
             }
-
             clickedSlot.onTakeItem(player, itemStack2);
             if (slot == 0) {
                 player.dropItem(itemStack2, false);
             }
         }
-
         return itemStack;
     }
 
@@ -188,5 +182,31 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
 
     protected PlayerEntity getPlayer() {
         return this.player;
+    }
+
+    @Override
+    public List<Inventory> getInventoriesForAutofill() {
+    List<Inventory> inventories = new ArrayList<>();
+        int reachRadius = 5;
+        BlockPos origin = this.blockEntity.getPos();
+
+        // Iterate over blocks in a cube around the origin.
+        BlockPos.iterate(origin.add(-reachRadius, -reachRadius, -reachRadius),
+                        origin.add(reachRadius, reachRadius, reachRadius))
+                .forEach(pos -> {
+                    if (!pos.equals(origin)) { // Exclude the block we're accessing from
+                        BlockEntity nearbyBlockEntity = this.blockEntity.getWorld().getBlockEntity(pos);
+                        if (nearbyBlockEntity instanceof Inventory inv) {
+                            System.out.println("Detected nearby inventory at " + pos + ": " + inv);
+                            // Debug: Log each slot's contents.
+                            for (int i = 0; i < inv.size(); i++) {
+                                System.out.println("Slot " + i + ": " + inv.getStack(i));
+                            }
+                            inventories.add(inv);
+                        }
+                    }
+                });
+        inventories.add(player.getInventory());
+        return inventories;
     }
 }

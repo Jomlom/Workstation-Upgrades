@@ -43,7 +43,7 @@ public class ReinforcedFurnace extends BlockWithEntity {
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
         return this.getDefaultState()
-                .with(FACING, ctx.getHorizontalPlayerFacing().getOpposite()) // Fix method name
+                .with(FACING, ctx.getHorizontalPlayerFacing().getOpposite())
                 .with(LIT, false);
     }
 
@@ -71,7 +71,7 @@ public class ReinforcedFurnace extends BlockWithEntity {
                 return super.onUse(state, world, pos, player, hit);
             }
             else {
-                // if player is sneaking pass so other action can happen e.g. eating or placing block
+                // If player is sneaking pass so other action can happen
                 if (player.isSneaking()){
                     return ActionResult.PASS;
                 }
@@ -93,7 +93,6 @@ public class ReinforcedFurnace extends BlockWithEntity {
         }
     }
 
-    // make the block tick
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {

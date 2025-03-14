@@ -1,6 +1,7 @@
 package com.jomlom.workstationupgrades.blockentity;
 
 import com.jomlom.workstationupgrades.WorkstationUpgrades;
+import com.jomlom.workstationupgrades.inventory.ImplementedInventory;
 import com.jomlom.workstationupgrades.network.BlockPosPayload;
 import com.jomlom.workstationupgrades.screenhandler.AdvancedCraftingScreenHandler;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;

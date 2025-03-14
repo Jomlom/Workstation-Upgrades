@@ -2,6 +2,7 @@ package com.jomlom.workstationupgrades.blockentity;
 
 import com.jomlom.workstationupgrades.WorkstationUpgrades;
 import com.jomlom.workstationupgrades.block.ReinforcedFurnace;
+import com.jomlom.workstationupgrades.inventory.ImplementedInventory;
 import com.jomlom.workstationupgrades.network.BlockPosPayload;
 import com.jomlom.workstationupgrades.screenhandler.ReinforcedFurnaceScreenHandler;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
@@ -37,10 +38,10 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
     public static final Text TITLE = Text.translatable("container." + WorkstationUpgrades.MOD_ID + ".reinforced_furnace");
 
     private int totalSmeltingTime = 20 * 3;
-    private int smeltingTime = totalSmeltingTime;  // The current time for smelting.
-    private int currentFuelTime = 0;  // Time left for the current fuel.
-    private int totalFuelTime;  // Total time for the two fuel items.
-    private boolean isSmelting;  // Whether the furnace is currently smelting.
+    private int smeltingTime = totalSmeltingTime;
+    private int currentFuelTime = 0;
+    private int totalFuelTime;
+    private boolean isSmelting;
 
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(4, ItemStack.EMPTY); // 4 slots (input, 2 fuel slots, output)
 
@@ -49,32 +50,26 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, ReinforcedFurnaceEntity entity) {
-        // client only code
+        // Client only
         if (world.isClient) {
             spawnFrontParticles(world, pos, state);
             spawnBackParticles(world, pos, state);
         }
-        // server only code
+        // Server only
         else {
-
             spawnSounds(world, pos, state);
 
-            // Check if the furnace should be lit based on fuel time or smelting state
             boolean wasLit = state.get(ReinforcedFurnace.LIT);
             boolean shouldBeLit = (entity.currentFuelTime > 0) || entity.isSmelting;
+            ItemStack input = entity.getInventory().get(0);
 
             if (wasLit != shouldBeLit) {
                 world.setBlockState(pos, state.with(ReinforcedFurnace.LIT, shouldBeLit), Block.NOTIFY_ALL);
             }
-
             if (entity.currentFuelTime > 0) {
                 entity.currentFuelTime--;
                 entity.markDirty();
             }
-
-            ItemStack input = entity.getInventory().get(0);  // get the input stack
-
-            // check if the furnace is smelting
             if (entity.isSmelting) {
                 entity.tickSmelting(input);
                 entity.markDirty();
@@ -93,18 +88,15 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
 
     private static void spawnFrontParticles(World world, BlockPos pos, BlockState state) {
         if (!state.get(ReinforcedFurnace.LIT)) {
-            return; // No particles if not lit
+            return;
         }
-
         if (world.random.nextFloat() < 0.2f) {
             // Furnace direction (facing)
             Direction direction = state.get(ReinforcedFurnace.FACING);
-
             // Determine the coordinates for the front face based on furnace direction
             double offsetX = 0.5 + (Math.random() - 0.5) * 0.6; // Random X offset (-0.3 to 0.3)
             double offsetY = 0.15 + (Math.random() - 0.5) * 0.25; // Random Y offset (-0.45 to -0.25)
             double offsetZ = 0.5 + (Math.random() - 0.5) * 0.6; // Random Z offset (-0.3 to 0.3)
-
             // Adjust the position based on the direction the furnace is facing
             switch (direction) {
                 case NORTH: offsetZ = -0.05; break;
@@ -113,10 +105,8 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
                 case WEST: offsetX = -0.05; break;
                 default: break;
             }
-
             // Spawn the fire particle (no velocity)
             world.addParticle(ParticleTypes.FLAME, pos.getX() + offsetX, pos.getY() + offsetY, pos.getZ() + offsetZ, 0.0, 0.0, 0.0);
-
             // Spawn the smoke particle (with upward velocity)
             world.addParticle(ParticleTypes.SMOKE, pos.getX() + offsetX, pos.getY() + offsetY, pos.getZ() + offsetZ, 0.0, 0.015, 0.0);
         }
@@ -125,18 +115,15 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
 
     private static void spawnBackParticles(World world, BlockPos pos, BlockState state) {
         if (!state.get(ReinforcedFurnace.LIT)) {
-            return; // No particles if not lit
+            return;
         }
-
         if (world.random.nextFloat() < 0.75f) {
             // Furnace direction (facing)
             Direction direction = state.get(ReinforcedFurnace.FACING);
-
             // Determine the coordinates for the front face based on furnace direction
             double offsetX = 0.5 + (Math.random() - 0.5) * 0.4; // Random X offset
             double offsetY = 0.85 + (Math.random() - 0.5) * 0.2; // Random Y offset
             double offsetZ = 0.5 + (Math.random() - 0.5) * 0.4; // Random Z offset
-
             // Adjust the position based on the direction the furnace is facing
             switch (direction) {
                 case NORTH: offsetZ = 1.05; offsetX+= 0.2; break;
@@ -145,12 +132,10 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
                 case WEST: offsetX = 1.05; offsetZ-= 0.2; break;
                 default: break;
             }
-
             if (world.random.nextFloat() < 0.2f) {
                 // Spawn the fire particle (no velocity)
                 world.addParticle(ParticleTypes.FLAME, pos.getX() + offsetX, pos.getY() + offsetY, pos.getZ() + offsetZ, 0.0, 0.0, 0.0);
             }
-
             // Spawn the smoke particle (with upward velocity)
             world.addParticle(ParticleTypes.SMOKE, pos.getX() + offsetX, pos.getY() + offsetY, pos.getZ() + offsetZ, 0.0, 0.025, 0.0);
         }
@@ -158,9 +143,8 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
 
     private static void spawnSounds (World world, BlockPos pos, BlockState state) {
         if (!state.get(ReinforcedFurnace.LIT)) {
-            return; // No sounds if not lit
+            return;
         }
-
         if (world.random.nextFloat() < 0.03f) {
             world.playSound(null, pos, SoundEvents.BLOCK_FURNACE_FIRE_CRACKLE, SoundCategory.BLOCKS, 1.6F, 0.6F);
         }
@@ -198,10 +182,9 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
     }
 
     private boolean hasFuel() {
-        ItemStack fuelSlot1 = this.inventory.get(1);  // Fuel slot 1
-        ItemStack fuelSlot2 = this.inventory.get(2);  // Fuel slot 2
-        return !fuelSlot1.isEmpty() && !fuelSlot2.isEmpty() &&
-                canUseFuel(fuelSlot1) && canUseFuel(fuelSlot2);
+        ItemStack fuelSlot1 = this.inventory.get(1);
+        ItemStack fuelSlot2 = this.inventory.get(2);
+        return !fuelSlot1.isEmpty() && !fuelSlot2.isEmpty() && canUseFuel(fuelSlot1) && canUseFuel(fuelSlot2);
     }
 
     private boolean canUseFuel(ItemStack stack) {
@@ -241,27 +224,23 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
     }
 
     private void completeSmelting() {
-        ItemStack input = this.inventory.get(0);  // The input slot
-        ItemStack output = this.inventory.get(3); // The output slot
+        ItemStack input = this.inventory.get(0);
+        ItemStack output = this.inventory.get(3);
 
         if (!input.isEmpty() && canSmelt(input)) {
             ItemStack result = getSmeltingResult(input);
-
             if (output.isEmpty() || ((output.getItem() == result.getItem()) && output.getCount() < output.getMaxCount())) {
-
                 if (output.isEmpty()) {
                     this.inventory.set(3, result.copy());
                 } else {
                     output.increment(1);
                 }
-
                 ItemStack newInput = input.copy();
                 newInput.decrement(1);
                 this.inventory.set(0, newInput);
                 if (this.inventory.get(0).isEmpty()) {
                     this.inventory.set(0, ItemStack.EMPTY);
                 }
-
                 smeltingTime = totalSmeltingTime;
             }
         }
@@ -271,23 +250,19 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
         if (input.isEmpty()) {
             return false;
         }
-
         ItemStack result = getSmeltingResult(input);
         if (result.isEmpty()) {
             return false;
         }
-
         ItemStack output = this.inventory.get(3);
         if (output.isEmpty()) {
             return true;
         }
-
         return (output.getItem() == result.getItem()) && (output.getCount() < output.getMaxCount());
     }
 
     public ItemStack getSmeltingResult(ItemStack inputStack) {
-        if (world instanceof ServerWorld) {
-            ServerWorld serverWorld = (ServerWorld) world;
+        if (world instanceof ServerWorld serverWorld) {
             SingleStackRecipeInput recipeInput = new SingleStackRecipeInput(inputStack);
             RecipeType<? extends AbstractCookingRecipe> recipeType = RecipeType.SMELTING;
             RecipeEntry<? extends AbstractCookingRecipe> recipeEntry = serverWorld.getRecipeManager()
@@ -304,30 +279,24 @@ public class ReinforcedFurnaceEntity extends BlockEntity implements ExtendedScre
 
     @Override
     protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-
         super.writeNbt(nbt, registryLookup);
-
         Inventories.writeNbt(nbt, inventory, registryLookup);
         nbt.putInt("SmeltingTime", this.smeltingTime);
         nbt.putInt("TotalSmeltingTime", this.totalSmeltingTime);
         nbt.putInt("CurrentFuelTime", this.currentFuelTime);
         nbt.putInt("TotalFuelTime", this.totalFuelTime);
         nbt.putBoolean("IsSmelting", this.isSmelting);
-
     }
 
     @Override
     protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-
         super.readNbt(nbt, registryLookup);
-
         this.smeltingTime = nbt.getInt("SmeltingTime");
         this.totalSmeltingTime = nbt.getInt("TotalSmeltingTime");
         this.currentFuelTime = nbt.getInt("CurrentFuelTime");
         this.totalFuelTime = nbt.getInt("TotalFuelTime");
         this.isSmelting = nbt.getBoolean("IsSmelting");
         Inventories.readNbt(nbt, inventory, registryLookup);
-
     }
 
     @Override

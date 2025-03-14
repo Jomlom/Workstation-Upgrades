@@ -19,23 +19,19 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
     private final ReinforcedFurnaceEntity blockEntity;
     private final ScreenHandlerContext context;
 
-    // client constructor
+    // Client constructor
     public ReinforcedFurnaceScreenHandler(int syncId, PlayerInventory playerInventory, BlockPosPayload payload) {
         this(syncId, playerInventory, (ReinforcedFurnaceEntity) playerInventory.player.getWorld().getBlockEntity(payload.pos()));
     }
 
-    // main constructor - directly called from server
+    // Main constructor
     public ReinforcedFurnaceScreenHandler(int syncId, PlayerInventory playerInventory, ReinforcedFurnaceEntity blockEntity) {
-
         super(ScreenHandlerTypeInit.REINFORCED_FURNACE, syncId);
-
         this.blockEntity = blockEntity;
         this.inventory = blockEntity;
         this.context = ScreenHandlerContext.create(this.blockEntity.getWorld(), this.blockEntity.getPos());
 
-        DefaultedList<ItemStack> inventory = this.blockEntity.getInventory();
-
-        addBlockEntityInventory(inventory);
+        addBlockEntityInventory();
         addPlayerInventory(playerInventory);
         addPlayerHotbar(playerInventory);
     }
@@ -54,15 +50,13 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
         }
     }
 
-    private void addBlockEntityInventory(DefaultedList<ItemStack> inventory){
-        // Add input slot index 0
+    private void addBlockEntityInventory(){
         addSlot(new Slot(this.inventory, 0, 52, 20) {
             @Override
             public boolean canInsert(ItemStack stack) {
                 return blockEntity.isValid(0, stack);
             }
         });
-        // Add fuel slots indexes 1 & 2
         addSlot(new Slot(this.inventory, 1, 43, 57) {
             @Override
             public boolean canInsert(ItemStack stack) {
@@ -75,7 +69,6 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
                 return blockEntity.isValid(2, stack);
             }
         });
-        // Add output slot index 3
         addSlot(new Slot(this.inventory, 3, 112, 39) {
             @Override
             public boolean canInsert(ItemStack stack) {
@@ -94,7 +87,6 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
         int blockEntityInvSize = this.blockEntity.getInventory().size();
         ItemStack newStack = ItemStack.EMPTY;
         Slot slot = getSlot(slotIndex);
-
         if (slot != null && slot.hasStack()) {
             ItemStack inSlot = slot.getStack();
             newStack = inSlot.copy();
@@ -111,10 +103,8 @@ public class ReinforcedFurnaceScreenHandler extends ScreenHandler {
                 slot.setStack(ItemStack.EMPTY);
             }
         }
-
         blockEntity.markDirty();
         sendContentUpdates();
-
         return newStack;
     }
 

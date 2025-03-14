@@ -10,8 +10,6 @@ public class WorkstationUpgradesClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 
-		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
-
 		HandledScreens.register(ScreenHandlerTypeInit.REINFORCED_FURNACE, ReinforcedFurnaceScreen::new);
 
 		HandledScreens.register(ScreenHandlerTypeInit.ADVANCED_CRAFTING_TABLE, AdvancedCraftingTableScreen::new);
