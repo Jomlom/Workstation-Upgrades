@@ -190,17 +190,13 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
         int reachRadius = 5;
         BlockPos origin = this.blockEntity.getPos();
 
-        // Iterate over blocks in a cube around the origin.
         BlockPos.iterate(origin.add(-reachRadius, -reachRadius, -reachRadius),
                         origin.add(reachRadius, reachRadius, reachRadius))
                 .forEach(pos -> {
-                    if (!pos.equals(origin)) { // Exclude the block we're accessing from
+                    if (!pos.equals(origin)) {
                         BlockEntity nearbyBlockEntity = this.blockEntity.getWorld().getBlockEntity(pos);
                         if (nearbyBlockEntity instanceof Inventory inv) {
-                            System.out.println("Detected nearby inventory at " + pos + ": " + inv);
-                            // Debug: Log each slot's contents.
                             for (int i = 0; i < inv.size(); i++) {
-                                System.out.println("Slot " + i + ": " + inv.getStack(i));
                             }
                             inventories.add(inv);
                         }

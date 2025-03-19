@@ -67,7 +67,7 @@ public class WorkstationUpgrades implements ModInitializer {
 				new ReinforcedFurnace(AbstractBlock.Settings.create().registryKey(REINFORCED_FURNACE_KEY)
 						.sounds(BlockSoundGroup.ANVIL)
 						.requiresTool()
-						.strength(10f, 10f)
+						.strength(10f)
 				),
 				REINFORCED_FURNACE_KEY,
 				true
@@ -85,7 +85,7 @@ public class WorkstationUpgrades implements ModInitializer {
 
 		public static final Block ADVANCED_CRAFTING_TABLE = register(
 				new AdvancedCraftingTable(AbstractBlock.Settings.create().registryKey(ADVANCED_CRAFTING_TABLE_KEY)
-						.sounds(BlockSoundGroup.WOOD)
+						.sounds(BlockSoundGroup.GILDED_BLACKSTONE)
 						.requiresTool()
 						.strength(3.5f)
 				),

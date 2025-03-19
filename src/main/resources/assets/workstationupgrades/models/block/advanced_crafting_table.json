@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "minecraft:block/oak_planks",
+    "east": "workstationupgrades:block/advanced_crafting_table_side",
+    "north": "workstationupgrades:block/advanced_crafting_table_front",
+    "particle": "workstationupgrades:block/advanced_crafting_table_front",
+    "south": "workstationupgrades:block/advanced_crafting_table_side",
+    "up": "workstationupgrades:block/advanced_crafting_table_top",
+    "west": "workstationupgrades:block/advanced_crafting_table_front"
+  }
+}
