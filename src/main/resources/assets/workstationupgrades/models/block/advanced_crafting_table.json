@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:block/cube",
   "textures": {
-    "down": "minecraft:block/oak_planks",
+    "down": "minecraft:block/polished_blackstone_bricks",
     "east": "workstationupgrades:block/advanced_crafting_table_side",
     "north": "workstationupgrades:block/advanced_crafting_table_front",
     "particle": "workstationupgrades:block/advanced_crafting_table_front",

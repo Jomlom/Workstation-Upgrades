@@ -1,4 +1,7 @@
 {
   "replace": false,
-  "values": ["workstationupgrades:reinforced_furnace"]
+  "values": [
+    "workstationupgrades:reinforced_furnace",
+    "workstationupgrades:advanced_crafting_table"
+  ]
 }

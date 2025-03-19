@@ -68,6 +68,7 @@ public class WorkstationUpgrades implements ModInitializer {
 						.sounds(BlockSoundGroup.ANVIL)
 						.requiresTool()
 						.strength(10f)
+						.resistance(20f)
 				),
 				REINFORCED_FURNACE_KEY,
 				true
@@ -88,6 +89,7 @@ public class WorkstationUpgrades implements ModInitializer {
 						.sounds(BlockSoundGroup.GILDED_BLACKSTONE)
 						.requiresTool()
 						.strength(3.5f)
+						.resistance(10f)
 				),
 				ADVANCED_CRAFTING_TABLE_KEY,
 				true
