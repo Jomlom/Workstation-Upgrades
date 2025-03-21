@@ -35,7 +35,6 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
 
     private final ScreenHandlerContext context;
     private final AdvancedCraftingTableEntity blockEntity;
-    private boolean filling;
     private final PlayerEntity player;
     private boolean finishedCreating = false;
 
@@ -87,8 +86,8 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
     }
 
     @Override
-    public void onContentChanged(net.minecraft.inventory.Inventory inventory) {
-        if (!this.filling && this.finishedCreating) {
+    public void onContentChanged(Inventory inventory) {
+        if (this.finishedCreating) {
             this.context.run((world, pos) -> {
                 if (world instanceof ServerWorld serverWorld) {
                     updateResult(this, serverWorld, getPlayer(), this.craftingInventory, this.craftingResultInventory, null);
@@ -98,17 +97,6 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
                 }
             });
         }
-    }
-
-    @Override
-    public void onInputSlotFillStart() {
-        this.filling = true;
-    }
-
-    @Override
-    public void onInputSlotFillFinish(ServerWorld world, RecipeEntry<CraftingRecipe> recipe) {
-        this.filling = false;
-        updateResult(this, world, getPlayer(), this.craftingInventory, this.craftingResultInventory, recipe);
     }
 
     @Override
@@ -125,7 +113,7 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
     public ItemStack quickMove(PlayerEntity player, int slot) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot clickedSlot = this.slots.get(slot);
-        if (clickedSlot != null && clickedSlot.hasStack()) {
+        if (clickedSlot.hasStack()) {
             ItemStack itemStack2 = clickedSlot.getStack();
             itemStack = itemStack2.copy();
             if (slot == 0) { // Crafting result slot
@@ -196,8 +184,6 @@ public class AdvancedCraftingScreenHandler extends AbstractCraftingScreenHandler
                     if (!pos.equals(origin)) {
                         BlockEntity nearbyBlockEntity = this.blockEntity.getWorld().getBlockEntity(pos);
                         if (nearbyBlockEntity instanceof Inventory inv) {
-                            for (int i = 0; i < inv.size(); i++) {
-                            }
                             inventories.add(inv);
                         }
                     }
